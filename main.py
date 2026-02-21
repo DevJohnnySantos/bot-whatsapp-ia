@@ -72,7 +72,7 @@ def webhook():
     return jsonify({"status": "ok"}), 200
 
 # Inicia a thread do agendador (Fora do __main__ para funcionar no Render/Gunicorn)
-threading.Thread(target=rodar_cron, daemon=True).start()
+# threading.Thread(target=rodar_cron, daemon=True).start()
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080)
