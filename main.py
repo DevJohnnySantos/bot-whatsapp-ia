@@ -8,7 +8,7 @@ import google.generativeai as genai
 
 app = Flask(name)
 
---- CONFIGURAÇÕES (No Replit, usa o cadeado 'Secrets' para estas chaves) ---
+# --- CONFIGURAÇÕES (No Replit, usa o cadeado 'Secrets' para estas chaves) --
 GEMINI_KEY = os.environ.get("GEMINI_KEY")
 NEWS_KEY = os.environ.get("NEWS_KEY")
 WEATHER_KEY = os.environ.get("WEATHER_KEY")
@@ -19,7 +19,7 @@ ID_GRUPO = "120363021000000000@g.us" # Substitui pelo teu ID
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
---- LOGICA DE BUSCA ---
+# --- LOGICA DE BUSCA ---
 def buscar_dados():
 # Simulação de busca para o teste
 clima = "Lisboa: 18°C, Sol; São Paulo: 22°C, Nublado"
@@ -36,7 +36,7 @@ requests.post(url, json=payload, headers=headers)
 except Exception as e:
 print(f"Erro ao enviar: {e}")
 
---- AGENDADOR ---
+# --- AGENDADOR ---
 def tarefa_das_6h30():
 clima, noticias = buscar_dados()
 prompt = f"Crie um resumo matinal com isto: {clima} e {noticias}"
@@ -49,7 +49,7 @@ while True:
 schedule.run_pending()
 time.sleep(1)
 
---- SERVIDOR PARA COMANDOS (!ia) ---
+# --- SERVIDOR PARA COMANDOS (!ia) ---
 @app.route('/')
 def home():
 return "IA Ativa e Operante! 🚀"
