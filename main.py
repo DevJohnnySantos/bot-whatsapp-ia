@@ -15,7 +15,7 @@ WEATHER_KEY = os.environ.get("WEATHER_KEY")
 EVO_URL = os.environ.get("EVO_URL")
 EVO_KEY = os.environ.get("EVO_KEY")
 EVO_INSTANCE = os.environ.get("EVO_INSTANCE", "BotGemini") # Puxa a variável ou usa BotGemini
-ID_GRUPO = "120363021000000000@g.us" # Substitua pelo ID real do seu grupo
+ID_GRUPO = "120363123456789@g.us" # Substitua pelo ID real do seu grupo
 
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
