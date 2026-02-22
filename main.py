@@ -8,71 +8,77 @@ import google.generativeai as genai
 
 app = Flask(__name__)
 
-# --- CONFIGURAÇÕES ---
-GEMINI_KEY = os.environ.get("GEMINI_KEY")
-NEWS_KEY = os.environ.get("NEWS_KEY")
-WEATHER_KEY = os.environ.get("WEATHER_KEY")
+# --- CONFIGURAÇÕES (Ajustadas para o seu Railway) ---
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY") # Ajustado para o nome comum
 EVO_URL = os.environ.get("EVO_URL")
 EVO_KEY = os.environ.get("EVO_KEY")
-EVO_INSTANCE = os.environ.get("EVO_INSTANCE", "BotGemini") # Puxa a variável ou usa BotGemini
-ID_GRUPO = "120363123456789@g.us" # Substitua pelo ID real do seu grupo
+EVO_INSTANCE = os.environ.get("EVO_INSTANCE", "BotGemini")
+ID_GRUPO = os.environ.get("ID_GRUPO") # Recomendo colocar o ID nas variáveis também
+PORT = int(os.environ.get("PORT", 8080))
 
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# --- LOGICA DE BUSCA ---
-def buscar_dados():
-    # Simulação de busca para o teste
-    clima = "Lisboa: 18°C, Sol; São Paulo: 22°C, Nublado"
-    noticias = "1. Lançamento do novo Gemini; 2. Avanços na IA"
-    return clima, noticias
-
-def enviar_whatsapp(texto):
-    print(f"A enviar para o WhatsApp: {texto[:50]}...")
+def enviar_whatsapp(texto, destinatario):
     url = f"{EVO_URL}/message/sendText/{EVO_INSTANCE}"
-    payload = {"number": ID_GRUPO, "text": texto}
-    headers = {"apikey": EVO_KEY}
+    payload = {
+        "number": destinatario, 
+        "text": texto,
+        "delay": 1200, # Delay de 1.2s para parecer humano
+        "linkPreview": True
+    }
+    headers = {"apikey": EVO_KEY, "Content-Type": "application/json"}
     try:
-        requests.post(url, json=payload, headers=headers)
+        res = requests.post(url, json=payload, headers=headers)
+        print(f"Resposta Evolution: {res.status_code}")
     except Exception as e:
         print(f"Erro ao enviar: {e}")
 
 # --- AGENDADOR ---
 def tarefa_das_6h30():
-    clima, noticias = buscar_dados()
-    prompt = f"Crie um resumo matinal com isto: {clima} e {noticias}"
+    # Aqui você deve colocar as requisições reais de clima e notícias
+    prompt = "Crie um resumo matinal curto para um grupo de WhatsApp sobre tecnologia e clima."
     resposta = model.generate_content(prompt)
-    enviar_whatsapp(resposta.text)
+    enviar_whatsapp(resposta.text, ID_GRUPO)
 
 def rodar_cron():
     schedule.every().day.at("06:30").do(tarefa_das_6h30)
     while True:
         schedule.run_pending()
-        time.sleep(1)
+        time.sleep(10) # 10 segundos é suficiente e poupa CPU
 
-# --- SERVIDOR PARA COMANDOS (!ia) ---
-@app.route('/')
-def home():
-    return "IA Ativa e Operante! 🚀"
-
+# --- WEBHOOK ---
 @app.route('/webhook', methods=['POST'])
 def webhook():
     dados = request.json
-    # Verifica se o evento é de mensagem recebida
-    if dados and dados.get("event") == "messages.upsert":
-        msg = dados['data']['message'].get('conversation', '').lower()
-        remoto = dados['data']['key']['remoteJid']
+    # A Evolution API envia dados estruturados. Ajuste conforme a versão:
+    try:
+        if dados.get("event") == "messages.upsert":
+            message_data = dados['data']
+            # Evita responder ao próprio bot para não entrar em loop
+            if message_data['key']['fromMe']:
+                return jsonify({"status": "ignored"}), 200
 
-        # Verifica se tem o comando e se veio do grupo certo
-        if "!ia" in msg and remoto == ID_GRUPO:
-            pergunta = msg.replace("!ia", "")
-            res = model.generate_content(pergunta)
-            enviar_whatsapp(res.text)
+            msg_text = message_data['message'].get('conversation') or \
+                       message_data['message'].get('extendedTextMessage', {}).get('text', '')
+            
+            remoto = message_data['key']['remoteJid']
+
+            if "!ia" in msg_text.lower():
+                pergunta = msg_text.lower().replace("!ia", "").strip()
+                res = model.generate_content(pergunta)
+                enviar_whatsapp(res.text, remoto)
+    except Exception as e:
+        print(f"Erro no processamento: {e}")
             
     return jsonify({"status": "ok"}), 200
 
-# Inicia a thread do agendador (Fora do __main__ para funcionar no Render/Gunicorn)
-# threading.Thread(target=rodar_cron, daemon=True).start()
+@app.route('/')
+def health_check():
+    return "Bot Online", 200
+
+# INICIA O CRON EM BACKGROUND
+threading.Thread(target=rodar_cron, daemon=True).start()
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=PORT)
