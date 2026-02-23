@@ -105,7 +105,7 @@ def tarefa_das_6h30():
         f"1. Aja com a personalidade de uma 'Tia' muito querida, cuidadosa e carinhosa. "
         f"2. Inicie a mensagem com o dia do ano bem visível no topo. "
         f"3. Liste o clima de CADA cidade fornecida em tópicos curtos (um embaixo do outro) e use emojis de clima. "
-        f"4. Resuma as notícias também em tópicos curtos e fáceis de ler. "
+        f"4. Resuma as notícias também em tópicos e coloque cada manchete em negrito e maiúscula. "
         f"5. Encerre com uma frase carinhosa, uma bênção ou um conselho típico de tia (ex: lembrando de levar casaco/guarda-chuva dependendo do tempo)."
     )
     
